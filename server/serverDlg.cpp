@@ -7,7 +7,7 @@
 #include "server.h"
 #include "serverDlg.h"
 #include "afxdialogex.h"
-
+#include <thread>
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
@@ -56,11 +56,11 @@ CserverDlg::CserverDlg(CWnd* pParent /*=nullptr*/)
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
 
-void CserverDlg::ListenThread()
-{
+//void CserverDlg::ListenThread()
+//{
 
-}
-
+//}
+/*
 void CserverDlg::ReceiveThreadProc()
 {
 	CString aaa;
@@ -77,7 +77,7 @@ void CserverDlg::ReceiveThreadProc()
 	m_list_msg.AddString(aaa);
 	// Close the client socket
 	client.Close();
-}
+}*/
 
 void CserverDlg::DoDataExchange(CDataExchange* pDX)
 {
@@ -90,6 +90,7 @@ BEGIN_MESSAGE_MAP(CserverDlg, CDialogEx)
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
 	ON_BN_CLICKED(IDC_BUTTON1, &CserverDlg::OnBnClickedButton1)
+	ON_BN_CLICKED(IDC_BUTTON2, &CserverDlg::OnBnClickedButton2)
 END_MESSAGE_MAP()
 
 
@@ -125,7 +126,10 @@ BOOL CserverDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// Set small icon
 
 	// TODO: Add extra initialization here
-
+	AfxSocketInit(NULL);
+//	serversock = new ServerSocket(this);
+	serversock.Create(8888);
+	serversock.Listen();
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }
 
@@ -178,10 +182,31 @@ HCURSOR CserverDlg::OnQueryDragIcon()
 	return static_cast<HCURSOR>(m_hIcon);
 }
 
-
+void CserverDlg::RecvThread() {
+	while (true) {
+		for (int i = 0; i < clients.size(); i++) {
+			char buff[512];
+			ZeroMemory(buff, 512);
+			int len = clients.at(i)->Receive(buff, 512, 0);
+			if (len > 0) {
+				CString msg(buff, len);
+				m_list_msg.AddString(msg);
+			}
+			else {
+				MessageBox(_T("fail"));
+			}
+		}
+		
+	}
+}
 
 void CserverDlg::OnBnClickedButton1()
 {
+	std::thread recvThrea(&CserverDlg::RecvThread, this);
+	recvThrea.join();
+	//this->serversock->Bind(8888);
+	//this->serversock->Listen();
+	/*
 	AfxSocketInit(NULL);
 	server.Create(8888);
 	server.Bind(8888);
@@ -193,8 +218,10 @@ void CserverDlg::OnBnClickedButton1()
 	CString aaa;
 	char msg[100] = { 0 };
 	int len = 0;
+	
 	while (true)
 	{
+		server.Send()
 		client.Receive(&len, sizeof(int), 0);
 		char* temp = new char[len + 1];
 		client.Receive(temp, len, 0);
@@ -202,9 +229,23 @@ void CserverDlg::OnBnClickedButton1()
 		aaa = temp;
 		break;
 	}
+	
 	m_list_msg.AddString(aaa);
 //	AfxBeginThread(&CserverDlg::ReceiveThreadProc, this);
 	//m_thread = std::thread(&CserverDlg::ReceiveThreadProc, this);
 	//m_thread.detach();
 	// TODO: Add your control notification handler code here
+	*/
+}
+
+
+void CserverDlg::OnBnClickedButton2()
+{
+	serversock.Send("aaa", 3);
+//	server.Send("aaaa", 4);
+	// TODO: Add your control notification handler code here
+}
+
+void CserverDlg::MsgBox(CString msg) {
+	MessageBox(msg);
 }

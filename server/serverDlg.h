@@ -5,6 +5,10 @@
 #pragma once
 #include "afxsock.h"
 #include <thread>
+#include "ServerSocket.h"
+#include <vector>
+
+class ServerSocket;
 
 // CserverDlg dialog
 class CserverDlg : public CDialogEx
@@ -12,11 +16,11 @@ class CserverDlg : public CDialogEx
 // Construction
 public:
 	CserverDlg(CWnd* pParent = nullptr);	// standard constructor
-	CSocket server;
-	CSocket client;
-	std::thread m_thread;
-	void ListenThread();
-	void ReceiveThreadProc();
+	//CSocket server;
+	//CSocket client;
+	//std::thread m_thread;
+	//void ListenThread();
+	//void ReceiveThreadProc();
 // Dialog Data
 #ifdef AFX_DESIGN_TIME
 	enum { IDD = IDD_SERVER_DIALOG };
@@ -39,4 +43,10 @@ protected:
 public:
 	afx_msg void OnBnClickedButton1();
 	CListBox m_list_msg;
+	afx_msg void OnBnClickedButton2();
+	//ServerSocket* serversock;
+	CAsyncSocket serversock;
+	std::vector <CAsyncSocket* > clients;
+	void MsgBox(CString msg);
+	void RecvThread();
 };
