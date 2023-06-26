@@ -20,9 +20,8 @@ void ServerSocket::OnAccept(int nErrorCode) {
         delete client;
         return;
     }
-    cServerDlg->clients.push_back(client);
-    cServerDlg->MsgBox(_T("Kết nối thành công."));
-
+    //cServerDlg->MsgBox(_T("Kết nối thành công."));
+    cServerDlg->GetClients(client);
     client->AsyncSelect(FD_READ);
     CAsyncSocket::OnAccept(nErrorCode);
 }
@@ -32,28 +31,9 @@ void ServerSocket::ReceiveThread() {
 }
 
 void ServerSocket::OnReceive(int nErrorCode) {
+    char buff[100];
+    this->Receive(buff, 100);
+    cServerDlg->MessageBox(_T("Oke nè"));
 
-
-    char buff[512];
-    ZeroMemory(buff, 512);
-    if (nErrorCode == 0) {
-        cServerDlg->MsgBox(_T("ccccaaa"));
-    }
-    else {
-        cServerDlg->MsgBox(_T("aaaa"));
-    }
-    int len = Receive(buff, 512, 0);
-    if (len <= 0) {
-        Close();
-        cServerDlg->MsgBox(_T("fail"));
-        return;
-    }
-    CString str(buff);
-    cServerDlg->m_list_msg.AddString(str);
-    
-    for (int i = 0; i < cServerDlg->clients.size(); i++) {
-        CAsyncSocket* client = cServerDlg->clients.at(i);
-        client->Send(buff, len);
-    }
     CAsyncSocket::OnReceive(nErrorCode);
 }
