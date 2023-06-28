@@ -11,3 +11,4 @@ public:
 	void OnReceive(int nErrorCode);
 };
 
+

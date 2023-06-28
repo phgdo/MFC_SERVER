@@ -1,4 +1,4 @@
-
+﻿
 // serverDlg.h : header file
 //
 
@@ -13,13 +13,7 @@ class ServerSocket;
 
 struct ClientSocketStruct {
 	CString name;
-	CAsyncSocket* clientSock;
-};
-
-struct SendMsgStruct {
-	CString targetName;
-	CString yourName;
-	CString msg;
+	ServerSocket* clientSock;
 };
 
 
@@ -55,24 +49,24 @@ protected:
 	afx_msg HCURSOR OnQueryDragIcon();
 	DECLARE_MESSAGE_MAP()
 public:
-	afx_msg void OnBnClickedButton1();
+	//thuộc tính
 	CListBox m_list_msg;
-	afx_msg void OnBnClickedButton2();
 	ServerSocket* serversock;
-	//CAsyncSocket serversock;
 	std::vector <ClientSocketStruct> clients;
+	CString tempName;
+	CString GetTargetName(CString msg);
+	int clientCount;
+
+	//phương thức
+	afx_msg void OnBnClickedButton1();
+	afx_msg void OnBnClickedButton2();
+	//CAsyncSocket serversock;
 	void MsgBox(CString msg);
 	void RecvThread();
 	CString GetSignal(CString msg);
 	bool GetUserPass(CString msg);
-	std::ifstream fileIn;
-	std::ofstream fileOut;
-	//CAsyncSocket server, client;
 	void GetClients(CAsyncSocket* client);
 	afx_msg void OnLbnSelchangeListMsg();
-	CString tempName;
 	bool CheckIfUsernameLogin(CString username);
-	CString GetTargetName(CString msg);
-	SendMsgStruct GetSendMsgStruct(CString msg);
 	bool SignUpUser(CString msg);
 };

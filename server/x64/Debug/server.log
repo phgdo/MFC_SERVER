@@ -1,2 +1,3 @@
 ﻿  ServerSocket.cpp
+C:\Users\phg\source\repos\finalchat\server\ServerSocket.cpp(116,35): warning C4002: too many arguments for function-like macro invocation '_T'
   server.vcxproj -> C:\Users\phg\source\repos\finalchat\x64\Debug\server.exe

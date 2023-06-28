@@ -33,7 +33,7 @@
     <ClInclude Include="pch.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ClientSocket.h">
+    <ClInclude Include="ClientSock.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -47,7 +47,7 @@
     <ClCompile Include="pch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ClientSocket.cpp">
+    <ClCompile Include="ClientSock.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

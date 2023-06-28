@@ -183,7 +183,7 @@
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="ClientSocket.h" />
+    <ClInclude Include="ClientSock.h" />
     <ClInclude Include="finalchat.h" />
     <ClInclude Include="finalchatDlg.h" />
     <ClInclude Include="framework.h" />
@@ -192,7 +192,7 @@
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="ClientSocket.cpp" />
+    <ClCompile Include="ClientSock.cpp" />
     <ClCompile Include="finalchat.cpp" />
     <ClCompile Include="finalchatDlg.cpp" />
     <ClCompile Include="pch.cpp">

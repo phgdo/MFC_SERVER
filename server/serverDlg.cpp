@@ -188,84 +188,22 @@ HCURSOR CserverDlg::OnQueryDragIcon()
 }
 
 void CserverDlg::RecvThread() {
-	while (true) {
-		for (int i = 0; i < clients.size(); i++) {
-			char buff[1024];
-			ZeroMemory(buff, 1024);
-			int len = clients.at(i).clientSock->Receive(buff, 1024);
-			if (len > 0) {
-				CString msg(buff, len);
-				CString signal = GetSignal(msg);
-				
-				//Xử lý nếu có client đăng nhập
-				if (signal == _T("SIGNIN")) {
-					//CString userPass = GetUserPass(msg);
-					if (GetUserPass(msg)) { //Gửi tín hiệu khi tài khoản đúng
-						if (CheckIfUsernameLogin(tempName)) {//Kiểm tra đã tài khoản đã bị login chưa
-							CString signalSend = _T("SIGNINACP");
-							CW2A buff(signalSend, CP_UTF8);
-							clients.at(i).clientSock->Send(buff, signalSend.GetLength());
-							//Sửa vector chưa client đó, thêm tên
-							clients.at(i).name = tempName;
-							CString tempName2 = tempName;
-							//Gửi thông tin có client mới online cho các client khác
-							for (int j = 0; j < clients.size(); j++) {
-								if (clients.at(j).name != tempName2) {
-									CString signalSend;
-									signalSend.Format(_T("NEWCL %s "), tempName2);
-									CW2A buff(signalSend, CP_UTF8);
-									clients.at(j).clientSock->Send(buff, signalSend.GetLength());
-								}
-							}
-						}
-						else { //Nếu đã bị login trước thì gửi tín hiệu LOGIN2
-							CString signalSend = _T("LOGIN2");
-							CW2A buff(signalSend, CP_UTF8);
-							clients.at(i).clientSock->Send(buff, signalSend.GetLength());
-						}
-					}
-					else { //Gửi tín hiệu khi sai tài khoản
-						CString signalSend = _T("WRONG");
-						CW2A buff(signalSend, CP_UTF8);
-						clients.at(i).clientSock->Send(buff, signalSend.GetLength());
-					}
-					
-					
-				}
-				else if (signal == _T("SENDMSG")) {
-					SendMsgStruct temp = GetSendMsgStruct(msg);
-					for (int j = 0; j < clients.size(); j++) {
-						if (clients.at(j).name == temp.targetName) {
-							CString newMsg;
-							newMsg.Format(_T("NEWMSG %s %s %s"), temp.targetName, temp.yourName, temp.msg);
-							CW2A buff(newMsg, CP_UTF8);
-							clients.at(j).clientSock->Send(buff, newMsg.GetLength());
-						}
-					}
-				}
-				else if (signal == _T("SIGNUP")) {
-					if (SignUpUser(msg)) {
-						CString newMsg;
-						newMsg.Format(_T("ACPSIGNUP"));
-						CW2A buff(newMsg, CP_UTF8);
-						clients.at(i).clientSock->Send(buff, newMsg.GetLength());
-					}
-				}
-				else if (signal == _T("LOGOUT")) {
-
-				}
-				m_list_msg.AddString(msg);
-			}
-			else {
-				//MessageBox(_T("fail"));
-			}
-		}
-	}
+	
 }
 
 void CserverDlg::OnBnClickedButton1()
 {	
 	this->serversock->Listen();
+	//Khởi tạo các socket clients
+	for (int i = 0; i < 100; i++) {
+		ClientSocketStruct temp;
+		temp.clientSock = new ServerSocket(this);
+		temp.name = ' ';
+		clients.push_back(temp);
+	}
+	clientCount = 0;
+
+
 	//std::thread recvThrea(&CserverDlg::RecvThread, this);
 	//recvThrea.detach();
 }
@@ -273,15 +211,7 @@ void CserverDlg::OnBnClickedButton1()
 
 void CserverDlg::OnBnClickedButton2()
 {
-	for (int i = 0; i < clients.size(); i++) {
-		CString message;
-		message.Format(_T("SIGNIN   "));
-		CW2A buff(message, CP_UTF8);
-		clients.at(i).clientSock->Send(buff, message.GetLength());
-	}
-	//this->serversock->Send("aaa", 3);
-//	server.Send("aaaa", 4);
-	// TODO: Add your control notification handler code here
+	
 }
 
 void CserverDlg::MsgBox(CString msg) {
@@ -305,15 +235,9 @@ CString CserverDlg::GetSignal(CString msg) {
 	return signal;
 }
 
-bool CserverDlg::CheckIfUsernameLogin(CString username) {
-	//Kiểm tra username đã đăng nhập chưa
-	for (int i = 0; i < clients.size(); i++) {
-		if (username == clients.at(i).name) {
-			return false;
-		}
-	}
-	return true;
-}
+//bool CserverDlg::CheckIfUsernameLogin(CString username) {
+	
+//}
 
 CString CserverDlg::GetTargetName(CString msg) {
 	CString targetName;
@@ -332,49 +256,6 @@ CString CserverDlg::GetTargetName(CString msg) {
 	return targetName;
 }
 
-bool CserverDlg::GetUserPass(CString msg) {
-	CString username = NULL;
-	CString password = NULL;
-	int wordCount = 0;
-	for (int j = 0; j < msg.GetLength(); j++) {
-		if (msg[j] == ' ') {
-			wordCount++;
-		}
-		if (wordCount == 3) {
-			break;
-		}
-		if (wordCount == 1 && msg[j] != ' ') {
-			username += msg[j];
-		}
-		else if (wordCount == 2 && msg[j] != ' ') {
-			password += msg[j];
-		}
-	}
-
-
-	tempName = username;
-	CString user;
-	user.Format(_T("%s %s"), username, password);
-	fileIn.open("taikhoan.txt");
-	if (fileIn.is_open()) {
-		std::string userStr;
-		std::string passStr;
-		while (std::getline(fileIn, userStr)) {
-			std::getline(fileIn, passStr);
-			CString ca(userStr.c_str());
-			CString cb(passStr.c_str());
-			//CStringA ca(line.c_str(), CP_UTF8);
-			if (username == ca && password == cb) {
-				fileIn.close();
-				return true;
-			}
-		}
-		fileIn.close();
-	}
-	
-
-	return false;
-}
 
 void CserverDlg::OnLbnSelchangeListMsg()
 {
@@ -388,82 +269,6 @@ void CserverDlg::OnLbnSelchangeListMsg()
 }
 
 void CserverDlg::GetClients(CAsyncSocket* client) {
-	ClientSocketStruct temp;
-	temp.clientSock = client;
-	temp.name = _T("");
-	clients.push_back(temp);
+
 }
 
-SendMsgStruct CserverDlg::GetSendMsgStruct(CString msg) {
-	SendMsgStruct temp;
-	CString targetName = NULL;
-	CString yourName = NULL;
-	CString msgA;
-	int wordCount = 0;
-	for (int j = 0; j < msg.GetLength(); j++) {
-		if (msg[j] == ' ') {
-			wordCount++;
-		}
-		if (wordCount == 1 && msg[j] != ' ') {
-			targetName += msg[j];
-		}
-		else if (wordCount == 2 && msg[j] != ' ') {
-			yourName += msg[j];
-		}
-		else if (wordCount > 2) {
-			msgA += msg[j];
-		}
-	}
-	temp.msg = msgA;
-	temp.targetName = targetName;
-	temp.yourName = yourName;
-	return temp;
-}
-
-bool CserverDlg::SignUpUser(CString msg) {
-	CString username = NULL;
-	CString password = NULL;
-	int wordCount = 0;
-	for (int j = 0; j < msg.GetLength(); j++) {
-		if (msg[j] == ' ') {
-			wordCount++;
-		}
-		if (wordCount == 3) {
-			break;
-		}
-		if (wordCount == 1 && msg[j] != ' ') {
-			username += msg[j];
-		}
-		if (wordCount == 2 && msg[j] != ' ') {
-			password += msg[j];
-		}
-	}
-
-	CString user;
-	user.Format(_T("%s %s"), username, password);
-	fileIn.open("taikhoan.txt");
-	if (fileIn.is_open()) {
-		std::string userStr;
-		std::string passStr;
-		while (std::getline(fileIn, userStr)) {
-			std::getline(fileIn, passStr);
-			CString ca(userStr.c_str());
-			CString cb(passStr.c_str());
-			//CStringA ca(line.c_str(), CP_UTF8);
-			if (username == ca) {
-				fileIn.close();
-				return false;
-			}
-		}
-		fileIn.close();
-	}
-	std::string strU, strP;
-	CT2A cvStrU(username);
-	CT2A cvStrP(password);
-	strU = cvStrU;
-	strP = cvStrP;
-	fileOut.open("taikhoan.txt", std::ios_base::app);
-	fileOut << strU << std::endl << strP << std::endl;
-	fileOut.close();
-	return true;
-}

@@ -4,14 +4,16 @@
 
 #pragma once
 #include "afxsock.h"
+#include "ClientSock.h"
 
+class ClientSock;
 // CfinalchatDlg dialog
 class CfinalchatDlg : public CDialogEx
 {
 // Construction
 public:
 	CfinalchatDlg(CWnd* pParent = nullptr);	// standard constructor
-	CSocket client;
+
 // Dialog Data
 #ifdef AFX_DESIGN_TIME
 	enum { IDD = IDD_FINALCHAT_DIALOG };
@@ -42,4 +44,5 @@ public:
 	CEdit m_edt_msg;
 	CButton m_btn_send;
 	CListBox m_list_msg;
+	ClientSock client;
 };

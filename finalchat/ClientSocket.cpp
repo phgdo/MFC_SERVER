@@ -1,5 +1,6 @@
 ﻿#include "pch.h"
 #include "ClientSocket.h"
+#include "finalchatDlg.h"
 
 ClientSocket::ClientSocket(CfinalchatDlg* cFinalchatDlg) {
 	this->cFinalchatDlg = cFinalchatDlg;

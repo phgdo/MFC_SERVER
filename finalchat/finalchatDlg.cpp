@@ -195,45 +195,6 @@ void CfinalchatDlg::OnBnClickedButtonSignin()
 		MessageBox(_T("Không thể kết nối"));
 	}
 	
-
-	fd_set read_fds;
-	FD_ZERO(&read_fds);
-	FD_SET(client, &read_fds);
-	while (true) {
-		timeval timeout;
-		timeout.tv_sec = 0;
-		timeout.tv_usec = 1000;  // 1 millisecond timeout
-		int result = select(0, &read_fds, NULL, NULL, &timeout);
-		if (result == SOCKET_ERROR) {
-			// Handle select error
-			break;
-		}
-		else if (result == 0) {
-			// Timeout, no data received
-			continue;
-		}
-		else {
-			// Data received, process it
-			char buff[512];
-			ZeroMemory(buff, 512);
-			int len = client.Receive(buff, 512, 0);
-			if (len == SOCKET_ERROR) {
-				// Handle receive error
-				break;
-			}
-			else if (len == 0) {
-				// Connection closed
-				break;
-			}
-			else {
-				// Process received data
-				// 
-				// ...
-				m_list_username.AddString(_T("a"));
-			}
-		}
-	}
-	client.Close();
 	//std::thread receiveThread(ReceiveThread);
 	//receiveThread.detach();
 	// TODO: Add your control notification handler code here

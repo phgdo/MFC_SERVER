@@ -1,2 +1,7 @@
-﻿  finalchatDlg.cpp
-  finalchat.vcxproj -> C:\Users\phg\source\repos\finalchat\x64\Debug\finalchat.exe
+﻿  ClientSock.cpp
+C:\Users\phg\source\repos\finalchat\finalchat\finalchatDlg.h(47,13): error C2079: 'CfinalchatDlg::client' uses undefined class 'ClientSock'
+  finalchat.cpp
+  finalchatDlg.cpp
+C:\Users\phg\source\repos\finalchat\finalchat\finalchatDlg.cpp(56,1): error C2512: 'ClientSock': no appropriate default constructor available
+C:\Users\phg\source\repos\finalchat\finalchat\finalchatDlg.h(9,7): message : see declaration of 'ClientSock'
+  Generating Code...
