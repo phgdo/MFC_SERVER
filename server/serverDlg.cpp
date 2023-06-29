@@ -198,7 +198,7 @@ void CserverDlg::OnBnClickedButton1()
 	for (int i = 0; i < 100; i++) {
 		ClientSocketStruct temp;
 		temp.clientSock = new ServerSocket(this);
-		temp.name = ' ';
+		temp.name = _T("");
 		clients.push_back(temp);
 	}
 	clientCount = 0;

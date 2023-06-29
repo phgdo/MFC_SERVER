@@ -12,6 +12,7 @@ struct SendMsgStruct {
 	CString msg;
 };
 
+
 class ServerSocket : public CAsyncSocket
 {
 public:
@@ -29,5 +30,10 @@ public:
 	SendMsgStruct GetSendMsgStruct(CString msg);
 	bool SignUpUser(CString msg);
 	CString GetUsernameLogout(CString msg);
+
+	void AcptCL(ServerSocket* client);
+	void SendMsgProcess(ServerSocket* client, CString msg);
 };
+
+
 

@@ -28,9 +28,10 @@ void ServerSocket::OnAccept(int nErrorCode) {
 
 
 void ServerSocket::OnReceive(int nErrorCode) {
-    char buff[1024];
-    ZeroMemory(buff, 1024);
-    int len = this->Receive(buff, 100);
+    char buff[512];
+    ZeroMemory(buff, 512);
+    int len = this->Receive(buff, 512);
+    //cServerDlg->m_list_msg.AddString(_T("1"));
     if (len > 0) {
         CString msg(buff, len);
         CString signal = GetSignal(msg);
@@ -38,35 +39,9 @@ void ServerSocket::OnReceive(int nErrorCode) {
             //CString userPass = GetUserPass(msg);
             if (GetUserPass(msg)) { //Gửi tín hiệu khi tài khoản đúng
                 if (CheckIfUsernameLogin(tempName)) {//Kiểm tra đã tài khoản đã bị login chưa
-                    CString signalSend = _T("SIGNINACP");
-                    CW2A buff(signalSend, CP_UTF8);
-                    Sleep(500);
-                    if (!this->Send(buff, signalSend.GetLength())) {
-                        cServerDlg->MessageBox(_T("Có lỗi xảy ra khi gửi thông báo chấp nhận đăng nhập tới client"));
-                    }
-                    cServerDlg->m_list_msg.AddString(tempName + _T(" logined"));
-                    cServerDlg->clients.at(cServerDlg->clientCount-1).name = tempName;
-                    //Sửa vector chưa client đó, thêm tên
-                    CString tempName2 = tempName;
-                    //Gửi thông tin có client mới online cho các client khác
-                    for (int j = 0; j < cServerDlg->clientCount; j++) {
-                        if (cServerDlg->clients.at(j).name != tempName2) {
-                            CString signalSend;
-                            signalSend.Format(_T("NEWCL %s "), tempName2);
-                            CW2A buff(signalSend, CP_UTF8);
-                            cServerDlg->clients.at(j).clientSock->Send(buff, signalSend.GetLength());
-                        }
-                    }
-                    //Gửi các username đã online cho client mới
-                    for (int j = 0; j < cServerDlg->clientCount; j++) {
-                        if (cServerDlg->clients.at(j).name != tempName2) {
-                            CString signalSend;
-                            signalSend.Format(_T("OLDCL %s"), cServerDlg->clients.at(j).name);
-                            CW2A buff(signalSend, CP_UTF8);
-                            this->Send(buff, signalSend.GetLength());
-                        }
-                    }
-
+                    std::thread t(&ServerSocket::AcptCL, this, this);
+                    t.detach();
+                    //cServerDlg->m_list_msg.AddString(_T("2"));
                 }
                 else { //Nếu đã bị login trước thì gửi tín hiệu LOGIN2
                     CString signalSend = _T("LOGIN2");
@@ -77,19 +52,12 @@ void ServerSocket::OnReceive(int nErrorCode) {
             else { //Gửi tín hiệu khi sai tài khoản
                 CString signalSend = _T("WRONG");
                 CW2A buff(signalSend, CP_UTF8);
-                cServerDlg->clients.at(cServerDlg->clientCount).clientSock->Send(buff, signalSend.GetLength());
+                cServerDlg->clients.at(cServerDlg->clientCount-1).clientSock->Send(buff, signalSend.GetLength());
             }
         }
         else if (signal == _T("SENDMSG")) {
-            SendMsgStruct temp = GetSendMsgStruct(msg);
-            for (int j = 0; j < cServerDlg->clientCount; j++) {
-                if (cServerDlg->clients.at(j).name == temp.targetName) {
-                    CString newMsg;
-                    newMsg.Format(_T("NEWMSG %s %s %s"), temp.targetName, temp.yourName, temp.msg);
-                    CW2A buff(newMsg, CP_UTF8);
-                    cServerDlg->clients.at(j).clientSock->Send(buff, newMsg.GetLength());
-                }
-            }
+            std::thread sendMsgThread(&ServerSocket::SendMsgProcess, this, this, msg);
+            sendMsgThread.detach();
         }
         else if (signal == _T("SIGNUP")) {
             if (SignUpUser(msg)) {
@@ -105,20 +73,28 @@ void ServerSocket::OnReceive(int nErrorCode) {
                 cServerDlg->clients.at(cServerDlg->clientCount - 1).clientSock->Send(buff, newMsg.GetLength());
             }
         }
+        //Nếu client logout sẽ gửi thông báo LOGOUT đến server
         else if (signal == _T("LOGOUT")) {
-            CString username = GetUsernameLogout(msg);
+            CString usernameOff = GetUsernameLogout(msg);
+            //Gửi thông báo đến các client khác là client có username = "xyz" đã offline
             for (int i = 0; i < cServerDlg->clientCount; i++) {
-                if (cServerDlg->clients.at(i).name == username) {
-                    cServerDlg->clients.erase(cServerDlg->clients.begin() + i);
-                }
-                else {
-                    CString newMsg;
-                    newMsg.Format(_T("CLOFF %s", username));
-                    CW2A buff(newMsg, CP_UTF8);
-                    cServerDlg->clients.at(i).clientSock->Send(buff, newMsg.GetLength());
+                if (cServerDlg->clients.at(i).name != usernameOff) {
+                    CString newMsg2 = _T("");
+                    newMsg2.Format(_T("CLOFF %s"), usernameOff);
+                    CW2A buff(newMsg2, CP_UTF8);
+                    if (cServerDlg->clients.at(i).clientSock->Send(buff, newMsg2.GetLength())) {
+                        cServerDlg->m_list_msg.AddString(newMsg2);
+                    }
                 }
             }
-            cServerDlg->clientCount--;
+            //Xóa khỏi client khỏi vector
+            for (int i = 0; i < cServerDlg->clientCount; i++) {
+                if (cServerDlg->clients.at(i).name == usernameOff) {
+                    cServerDlg->clients.erase(cServerDlg->clients.begin() + i);
+                    break;
+                }
+            }
+            //cServerDlg->clientCount--;
             this->Close();
         }
     }
@@ -286,4 +262,61 @@ CString ServerSocket::GetUsernameLogout(CString msg) {
         }
     }
     return username;
+}
+
+void ServerSocket::SendMsgProcess(ServerSocket* client, CString msg) {
+    SendMsgStruct temp = GetSendMsgStruct(msg);
+    for (int j = 0; j < cServerDlg->clientCount; j++) {
+        if (cServerDlg->clients.at(j).name == temp.targetName) {
+            CString newMsg;
+            newMsg.Format(_T("NEWMSG %s %s %s"), temp.targetName, temp.yourName, temp.msg);
+            CW2A buff(newMsg, CP_UTF8);
+            cServerDlg->clients.at(j).clientSock->Send(buff, newMsg.GetLength());
+        }
+    }
+}
+
+void ServerSocket::AcptCL(ServerSocket* client) {
+        CString signalSend = _T("SIGNINACP");
+        CW2A buff(signalSend, CP_UTF8);
+        //Sleep(500);
+        if (!client->Send(buff, signalSend.GetLength())) {
+            cServerDlg->MessageBox(_T("Có lỗi xảy ra khi gửi thông báo chấp nhận đăng nhập tới client"));
+        }
+        cServerDlg->m_list_msg.AddString(signalSend);
+        cServerDlg->m_list_msg.AddString(tempName + _T(" logined"));
+        //set name = username cho socket
+        for (int j = 0; j < cServerDlg->clientCount; j++) {
+            if (cServerDlg->clients.at(j).clientSock == this) {
+                cServerDlg->clients.at(j).name = tempName;
+                break;
+            }
+        }
+        CString tempName2 = tempName;
+        //Gửi thông tin có client mới online cho các client khác
+        for (int j = 0; j < cServerDlg->clientCount; j++) {
+            if (cServerDlg->clients.at(j).name != tempName2 && cServerDlg->clients.at(j).name != _T("")) {
+                CString signalSend2;
+                signalSend2.Format(_T("NEWCL %s "), tempName2);
+                CW2A buff(signalSend2, CP_UTF8);
+                cServerDlg->clients.at(j).clientSock->Send(buff, signalSend2.GetLength());
+            }
+        }
+        //Gửi danh sách các username đã online cho client mới
+        CString listUserOnline;
+        int check = 0;
+        for (int j = 0; j < cServerDlg->clientCount; j++) {
+            if (cServerDlg->clients.at(j).name != tempName2 && cServerDlg->clients.at(j).name != _T("")) {
+                listUserOnline += cServerDlg->clients.at(j).name + _T(" ");
+                check++;
+                //cServerDlg->m_list_msg.AddString(_T("3"));
+            }
+        }
+        if (check != 0) {
+            CString signalSend3;
+            signalSend3.Format(_T("OLDCL %s"), listUserOnline);
+            CW2A buff(signalSend3, CP_UTF8);
+            client->Send(buff, signalSend3.GetLength());
+            cServerDlg->m_list_msg.AddString(signalSend3);
+        }
 }
