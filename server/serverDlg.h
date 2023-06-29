@@ -50,6 +50,7 @@ protected:
 	DECLARE_MESSAGE_MAP()
 public:
 	//thuộc tính
+	bool btnStart;
 	CListBox m_list_msg;
 	ServerSocket* serversock;
 	std::vector <ClientSocketStruct> clients;
@@ -69,4 +70,6 @@ public:
 	afx_msg void OnLbnSelchangeListMsg();
 	bool CheckIfUsernameLogin(CString username);
 	bool SignUpUser(CString msg);
+	CButton m_btn_start;
+	CEdit m_edt_port;
 };

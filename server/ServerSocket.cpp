@@ -189,7 +189,7 @@ SendMsgStruct ServerSocket::GetSendMsgStruct(CString msg) {
         else if (wordCount == 2 && msg[j] != ' ') {
             yourName += msg[j];
         }
-        else if (wordCount > 2) {
+        else if (wordCount > 2 && msg[j] != ' ') {
             msgA += msg[j];
         }
     }

@@ -84,6 +84,8 @@ void CserverDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_LIST_MSG, m_list_msg);
+	DDX_Control(pDX, IDC_BUTTON1, m_btn_start);
+	DDX_Control(pDX, IDC_EDIT_PORT, m_edt_port);
 }
 
 BEGIN_MESSAGE_MAP(CserverDlg, CDialogEx)
@@ -129,8 +131,8 @@ BOOL CserverDlg::OnInitDialog()
 
 	// TODO: Add extra initialization here
 	AfxSocketInit(NULL);
+	btnStart = false;
 	serversock = new ServerSocket(this);
-	this->serversock->Create(8888);
 //	this->serversock->Listen();
 	
 	//server.Create(8888);
@@ -193,17 +195,45 @@ void CserverDlg::RecvThread() {
 
 void CserverDlg::OnBnClickedButton1()
 {	
-	this->serversock->Listen();
-	//Khởi tạo các socket clients
-	for (int i = 0; i < 100; i++) {
-		ClientSocketStruct temp;
-		temp.clientSock = new ServerSocket(this);
-		temp.name = _T("");
-		clients.push_back(temp);
+	if (btnStart == false) {
+		m_list_msg.ResetContent();
+		CString strPort = _T("");
+		m_edt_port.GetWindowTextW(strPort);
+		int num = _ttoi(strPort);
+		if (num == 0) {
+			num = 8888;
+			m_list_msg.AddString(_T("Không thể tạo server trên port ") + strPort);
+			m_list_msg.AddString(_T("Tạo server trên port 8888"));
+			strPort = _T("8888");
+			m_edt_port.SetWindowTextW(strPort);
+		}
+		if (!this->serversock->Create(num)) {
+			m_list_msg.AddString(_T("Không thể tạo server trên port ") + strPort);
+			return;
+		}
+		m_list_msg.AddString(_T("Tạo thành công server trên port ") + strPort);
+		if (!this->serversock->Listen()) {
+			m_list_msg.AddString(_T("Không thể lắng nghe các kết nối"));
+			return;
+		}
+		m_list_msg.AddString(_T("Bắt đầu lắng nghe"));
+		//Khởi tạo các socket clients
+		for (int i = 0; i < 100; i++) {
+			ClientSocketStruct temp;
+			temp.clientSock = new ServerSocket(this);
+			temp.name = _T("");
+			clients.push_back(temp);
+		}
+		clientCount = 0;
+		btnStart = true;
+		m_btn_start.SetWindowTextW(_T("Stop"));
 	}
-	clientCount = 0;
-
-
+	else {
+		serversock->Close();
+		clients.clear();
+		m_btn_start.SetWindowTextW(_T("Start"));
+		btnStart = false;
+	}
 	//std::thread recvThrea(&CserverDlg::RecvThread, this);
 	//recvThrea.detach();
 }
