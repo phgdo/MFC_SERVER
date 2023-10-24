@@ -1,0 +1,6 @@
+﻿  ChattingDlg.cpp
+C:\Users\phg\source\repos\Chatting\Chatting\ChattingDlg.cpp(234,7): warning C4101: 'msg': unreferenced local variable
+  SocketClient.cpp
+C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppCommon.targets(1096,5): error MSB6006: "link.exe" exited with code 1120.
+ChattingDlg.obj : error LNK2001: unresolved external symbol __imp_PlaySoundW
+C:\Users\phg\source\repos\Chatting\x64\Release\Chatting.exe : fatal error LNK1120: 1 unresolved externals
